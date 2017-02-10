@@ -21,6 +21,7 @@ int main(int argc, char **argv){
 	// minimal args: remexec template-name
 	if(argc < 2){
 		std::cout<<"Not enough arguments. At least you need to specify the template name.\n";
+		return 1;
 	}
 	// get flags from argv
 	std::string flags;
@@ -53,11 +54,13 @@ int main(int argc, char **argv){
 	
 	// if OK then output
 	std::cout<<"EXEC "<<templateName<<std::endl;
-	std::cout<<"FLAGS "<<flags<<std::endl;
+	std::cout<<"Flags: "<<flags<<std::endl;
 	for(int i=0; i<filesv.size(); i++){
-		std::cout<<"FILE "<<argv[firstFilenamePosition+i]<<" "<<filesv[i]->tellg()<<std::endl;
+		std::cout<<"File:"<<filesv[i]->tellg()<<" "<<argv[firstFilenamePosition+i]<<std::endl;
+		filesv[i]->seekg(0);
 		std::cout<<*filesv[i]<<"\n";
 		filesv[i]->close();
+		delete filesv[i];
 	}
 	std::cout<<"END";
 	
