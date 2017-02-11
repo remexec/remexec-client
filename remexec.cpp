@@ -19,10 +19,11 @@ int main(int argc, char **argv){
 	// 0		1		1		2			3			4
 	// remexec -flag0 -flag1 template-name	filename0	filename1
 	// minimal args: remexec template-name
-	if(argc < 2){
-		std::cout<<"Not enough arguments. At least you need to specify the template name.\n";
-		return 1;
+	if(argc == 1){
+		std::cout<<"Syntax: remexec [flags...] <task_name> <files...>\n";
+		return 0;
 	}
+	
 	// get flags from argv
 	std::string flags;
 	int i=1;
@@ -36,6 +37,11 @@ int main(int argc, char **argv){
 			flags+=' ';
 		}else
 			break;
+	}
+	
+	if(i == argc){
+		std::cout<<"Not enough arguments. At least you need to specify the template name.\n";
+		return 1;
 	}
 	
 	// last processed element without '-' from ARGV will be template-name
@@ -54,15 +60,15 @@ int main(int argc, char **argv){
 	
 	// if OK then output
 	std::cout<<"EXEC "<<templateName<<std::endl;
-	std::cout<<"Flags: "<<flags<<std::endl;
+	if(flags.length() != 0) 
+		std::cout<<"Flags: "<<flags<<std::endl;
 	for(int i=0; i<filesv.size(); i++){
-		std::cout<<"File:"<<filesv[i]->tellg()<<" "<<argv[firstFilenamePosition+i]<<std::endl;
+		std::cout<<"File: "<<filesv[i]->tellg()<<" "<<argv[firstFilenamePosition+i]<<std::endl;
 		filesv[i]->seekg(0);
 		std::cout<<*filesv[i]<<"\n";
 		filesv[i]->close();
 		delete filesv[i];
 	}
-	std::cout<<"END";
 	
 	return 0;
 }
