@@ -8,7 +8,10 @@
 #include <unistd.h>
 #include <pwd.h>
 
+#include "cppsockets/sockets.hpp"
+
 using namespace std;
+using namespace sockets;
 
 unordered_map<string,string> server;
 
@@ -104,19 +107,23 @@ int main(int argc, char **argv){
 		return 1;
 	};
 	
-	//configure web connection
-	//cout<<server["address"]<<":"<<server["port"]<<endl;
-	
-	// if OK then output
-	cout<<"EXEC "<<templateName<<endl;
-	if(flags.length() != 0) 
-		cout<<"Flags: "<<flags<<endl;
-	for(int i=0; i<filesv.size(); i++){
-		cout<<"File: "<<filesv[i]->tellg()<<" "<<argv[firstFilenamePosition+i]<<endl;
-		filesv[i]->seekg(0);
-		cout<<*filesv[i]<<"\n";
-		filesv[i]->close();
-		delete filesv[i];
+	//configure and create connection
+	socket_tcp cli(address_ip4(server["address"], stoi(server["port"])));
+	cli.open();
+	if(cli.valid()){
+		// if OK then output
+		cout<<"EXEC "<<templateName<<endl;
+		if(flags.length() != 0) 
+			cout<<"Flags: "<<flags<<endl;
+		for(int i=0; i<filesv.size(); i++){
+			cli<<"File: "<<filesv[i]->tellg()<<" "<<argv[firstFilenamePosition+i]<<endl;
+			filesv[i]->seekg(0);
+			cli<<*filesv[i]<<"\n";
+			filesv[i]->close();
+			delete filesv[i];
+		}
+	}else{
+		cout<<"Error while connecting to "<<server["address"]<<":"<<stoi(server["port"])<<endl;
 	}
 	
 	return 0;

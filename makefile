@@ -2,7 +2,7 @@ CC = g++
 CPPFLAGS = -Wall -O3 -std=c++1y -flto
 LDLIBS = 
 
-SOURCES = $(wildcard *.cpp)
+SOURCES = $(wildcard *.cpp) $(wildcard cppsockets/*.cpp)
 OBJECTS = $(SOURCES:%.cpp=%.o)
 
 APP_NAME = remexec
