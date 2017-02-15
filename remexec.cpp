@@ -112,9 +112,9 @@ int main(int argc, char **argv){
 	cli.open();
 	if(cli.valid()){
 		// if OK then output
-		cout<<"EXEC "<<templateName<<endl;
+		cli<<"EXEC "<<templateName<<endl;
 		if(flags.length() != 0) 
-			cout<<"Flags: "<<flags<<endl;
+			cli<<"Flags: "<<flags<<endl;
 		for(int i=0; i<filesv.size(); i++){
 			cli<<"File: "<<filesv[i]->tellg()<<" "<<argv[firstFilenamePosition+i]<<endl;
 			filesv[i]->seekg(0);
