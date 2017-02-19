@@ -122,6 +122,8 @@ int main(int argc, char **argv){
 			filesv[i]->close();
 			delete filesv[i];
 		}
+		cli<<"\nEXIT\n";
+		cout<<cli;
 	}else{
 		cout<<"Error while connecting to "<<server["address"]<<":"<<stoi(server["port"])<<endl;
 	}
