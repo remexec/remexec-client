@@ -111,19 +111,51 @@ int main(int argc, char **argv){
 	socket_tcp cli(address_ip4(server["address"], stoi(server["port"])));
 	cli.open();
 	if(cli.valid()){
-		// if OK then output
-		cli<<"EXEC "<<templateName<<endl;
-		if(flags.length() != 0) 
-			cli<<"Flags: "<<flags<<endl;
+		string ok;
+		// if OK then transmit files
 		for(int i=0; i<filesv.size(); i++){
-			cli<<"File: "<<filesv[i]->tellg()<<" "<<argv[firstFilenamePosition+i]<<endl;
+			cli<<"FILE\nName: "<<argv[firstFilenamePosition+i]<<"\nSize: "<<filesv[i]->tellg()<<endl<<endl;
 			filesv[i]->seekg(0);
-			cli<<*filesv[i]<<"\n";
+			cli<<*filesv[i]<<"\n\n";
 			filesv[i]->close();
 			delete filesv[i];
+			cli>>ok;
+			if(ok != "OK"){
+				cout<<"Server error: "<<ok;
+				return 1;
+			}
 		}
-		cli<<"\nEXIT\n";
-		cout<<cli;
+		// command to fun with flags
+		cli<<"EXEC "<<templateName<<endl<<endl;
+		if(flags.length() != 0) 
+			cli<<"Flags: "<<flags<<endl<<endl;
+		cli<<"\n\nEXIT\n\n";
+		cli>>ok;
+		if(ok != "OK"){
+			cout<<"Server error: "<<ok;
+			return 1;
+		}
+		// server answer's parser
+		string line;
+		while (getline(cli, line)){
+			if (line.empty())
+				continue;
+			
+			istringstream stream_line(line);
+			string cmd;
+			stream_line>>cmd;
+			if(cmd == "STREAM"){
+				string tmp, number, ssize;
+				stream_line>>number; // get number of stream
+				getline(cli, line);
+				istringstream ss_size(line);
+				ss_size>>tmp>>ssize; 
+				int size = stoi(ssize); // get size of stream part
+				char buf[size];
+				cli.read(buf, size);
+				cout.write(buf, size); // output to stdout
+			}
+		}
 	}else{
 		cout<<"Error while connecting to "<<server["address"]<<":"<<stoi(server["port"])<<endl;
 	}
