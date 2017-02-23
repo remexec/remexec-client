@@ -145,15 +145,19 @@ int main(int argc, char **argv){
 			string cmd;
 			stream_line>>cmd;
 			if(cmd == "STREAM"){
-				string tmp, number, ssize;
-				stream_line>>number; // get number of stream
+				string tmp, snumber, ssize;
+				stream_line>>snumber; // get number of stream
+				int number = stoi(snumber);
 				getline(cli, line);
 				istringstream ss_size(line);
 				ss_size>>tmp>>ssize; 
 				int size = stoi(ssize); // get size of stream part
 				char buf[size];
 				cli.read(buf, size);
-				cout.write(buf, size); // output to stdout
+				if(number == 1)
+					cout.write(buf, size); // output to stdout
+				else
+					cerr.write(buf, size); // output to stderr
 			}
 		}
 	}else{
