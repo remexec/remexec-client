@@ -47,7 +47,7 @@ int getConfig(){
 }
 
 ostream &operator << (ostream &os, istream &is){
-	char buf[64];
+	char buf[4];
 	while (is.read(buf, sizeof(buf))){
 		os.write(buf, sizeof(buf));
 	}
@@ -63,15 +63,22 @@ int main(int argc, char **argv){
 	// remexec -flag0 -flag1 template-name	filename0	filename1
 	// minimal args: remexec template-name
 	if(argc == 1){
-		cout<<"Syntax: remexec [flags...] <task_name> <files...>\n";
+		cout<<"Syntax: remexec [flags...] [-g=file2fetch] <task_name> <files...>\n";
 		return 0;
 	}
 	
 	// get flags from argv
+	string file2fetch;
 	string flags;
 	int i=1;
 	for(; i<argc; i++){
-		if(argv[i][0] == '-'){
+		if(argv[i][0] == '-' && argv[i][1] == 'g'){
+			int j=3;
+			while(argv[i][j]){
+				file2fetch+=argv[i][j];
+				j++;
+			}
+		}else if(argv[i][0] == '-'){
 			int j=0;
 			while(argv[i][j]){
 				flags+=argv[i][j];
@@ -111,17 +118,17 @@ int main(int argc, char **argv){
 	socket_tcp cli(address_ip4(server["address"], stoi(server["port"])));
 	cli.open();
 	if(cli.valid()){
-		string ok;
+		string ok, tmp;
 		// if OK then transmit files
 		for(int i=0; i<filesv.size(); i++){
-			cli<<"FILE\nName: "<<argv[firstFilenamePosition+i]<<"\nSize: "<<filesv[i]->tellg()<<endl<<endl;
+			cli<<"FILE\nName: "<<argv[firstFilenamePosition+i]<<"\nSize: "<<filesv[i]->tellg()<<"\n\n";
 			filesv[i]->seekg(0);
 			cli<<*filesv[i]<<"\n\n";
 			filesv[i]->close();
 			delete filesv[i];
 			cli>>ok;
 			if(ok != "OK"){
-				cout<<"Server error: "<<ok;
+				cout<<"Server error while transmitting file: "<<ok<<endl;
 				return 1;
 			}
 		}
@@ -129,37 +136,68 @@ int main(int argc, char **argv){
 		cli<<"EXEC "<<templateName<<endl<<endl;
 		if(flags.length() != 0) 
 			cli<<"Flags: "<<flags<<endl<<endl;
-		cli<<"\n\nEXIT\n\n";
 		cli>>ok;
 		if(ok != "OK"){
-			cout<<"Server error: "<<ok;
+			cout<<"Server error while execution: "<<ok<<endl;
 			return 1;
 		}
+		
 		// server answer's parser
 		string line;
 		while (getline(cli, line)){
 			if (line.empty())
 				continue;
-			
+
 			istringstream stream_line(line);
 			string cmd;
 			stream_line>>cmd;
 			if(cmd == "STREAM"){
-				string tmp, snumber, ssize;
-				stream_line>>snumber; // get number of stream
-				int number = stoi(snumber);
+				int number, size;
+				stream_line>>number; // get number of stream
 				getline(cli, line);
 				istringstream ss_size(line);
-				ss_size>>tmp>>ssize; 
-				int size = stoi(ssize); // get size of stream part
+				ss_size>>tmp>>size; // get size of stream part
 				char buf[size];
+				cli.get();
 				cli.read(buf, size);
 				if(number == 1)
 					cout.write(buf, size); // output to stdout
 				else
 					cerr.write(buf, size); // output to stderr
+			} else if(cmd == "END")
+				break;
+		}
+		
+		// fetch file from server
+		if(file2fetch != ""){
+			ok = "";
+			cli.get();
+			cli<<"FETCH "<<file2fetch<<endl<<endl;
+			cli>>ok;
+			if(ok == "ERROR"){
+				int code;
+				cli>>code;
+				getline(cli, ok);
+				cout<<"Server error while fetching: "<<code<<ok<<endl;
+				return 1;
+			}else{
+				string tmp;
+				getline(cli, tmp);
+				int size;
+				cli>>tmp>>size; // get size of file
+				getline(cli, tmp);
+				getline(cli, tmp);
+				ofstream of(file2fetch);
+				char buf[size];
+				cli.get();
+				cli.read(buf, size);
+				of.write(buf, size);
+				of.close();
 			}
 		}
+		
+		// close connection
+		cli<<"EXIT\n\n";
 	}else{
 		cout<<"Error while connecting to "<<server["address"]<<":"<<stoi(server["port"])<<endl;
 	}
