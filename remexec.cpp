@@ -142,7 +142,9 @@ int main(int argc, char **argv){
 			cli<<"Flags: "<<flags<<endl<<endl;
 		cli>>ok;
 		if(ok != "OK"){
-			cout<<"Server error while execution: "<<ok<<endl;
+			cli.get(); // get space after ERROR
+			getline(cli, ok); // get the rest of the string
+			cout<<"Server error while execution: ERR#"<<ok<<endl;
 			return 1;
 		}
 		
