@@ -15,6 +15,10 @@ using namespace sockets;
 
 unordered_map<string,string> server;
 
+string basename(string path){
+	return string(::basename(path.c_str()));
+}
+
 int getConfig(){
 	// get home dir and construct full name of config file
 	char *homedir;
@@ -121,7 +125,7 @@ int main(int argc, char **argv){
 		string ok, tmp;
 		// if OK then transmit files
 		for(int i=0; i<filesv.size(); i++){
-			cli<<"FILE\nName: "<<argv[firstFilenamePosition+i]<<"\nSize: "<<filesv[i]->tellg()<<"\n\n";
+			cli<<"FILE\nName: "<<basename(argv[firstFilenamePosition+i])<<"\nSize: "<<filesv[i]->tellg()<<"\n\n";
 			filesv[i]->seekg(0);
 			cli<<*filesv[i]<<"\n\n";
 			filesv[i]->close();
